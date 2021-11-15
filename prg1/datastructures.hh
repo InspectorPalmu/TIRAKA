@@ -87,6 +87,14 @@ private:
 };
 
 
+struct Town
+{
+ TownID town_id_;
+ Name town_name_;
+ Coord town_coord_;
+ int town_tax_;
+};
+
 // This is the class you are supposed to implement
 
 class Datastructures
@@ -178,7 +186,7 @@ public:
     int total_net_tax(TownID id);
 
 private:
-    // Add stuff needed for your class implementation here
+    std::unordered_map<TownID, Town*> townMap;
 
 };
 
