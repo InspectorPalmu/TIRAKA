@@ -1,8 +1,8 @@
 // Datastructures.cc
 //
-// Student name:
-// Student email:
-// Student number:
+// Student name: Lauri Mänty
+// Student email: lauri.manty@tuni.fi
+// Student number: H290353
 
 #include "datastructures.hh"
 
@@ -123,56 +123,117 @@ std::vector<TownID> Datastructures::all_towns()
     return idVec;
 }
 
-std::vector<TownID> Datastructures::find_towns(const Name &/*name*/)
+std::vector<TownID> Datastructures::find_towns(const Name &name)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("find_towns()");
+
+    std::vector<TownID> nameVec;
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    for(auto it=townMap.begin(); it!=townMap.end(); it++)
+    {
+        if (it->second->town_name_ == name)
+        {
+            nameVec.push_back(it->first);
+        }
+    }
+    return nameVec;
 }
 
-bool Datastructures::change_town_name(TownID /*id*/, const Name &/*newname*/)
+bool Datastructures::change_town_name(TownID id, const Name &newname)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("change_town_name()");
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    it = townMap.find(id);
+    if (it != townMap.end())
+    {
+        it->second->town_name_ = newname;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 std::vector<TownID> Datastructures::towns_alphabetically()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented("towns_alphabetically()");
+    std::vector<TownID> idVec = all_towns();
+    std::sort(idVec.begin(), idVec.end(),
+               [&](TownID a, TownID b) { return get_town_name(a) < get_town_name(b); });
+    return idVec;
+
+}
+
+double eucDistOriSqr(Coord coord1, Coord coord2 = {0,0})
+{
+    double dx = (coord1.x-coord2.x);
+    double dy = (coord1.y-coord2.y);
+    double distSqr = dx*dx + dy*dy;
+    return distSqr; // returnig square of the distance is more efficient
+                    // and for sorting purposes its exactly same as returning square root
 }
 
 std::vector<TownID> Datastructures::towns_distance_increasing()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented("towns_distance_increasing()");
+    std::vector<TownID> idVec = all_towns();
+    std::sort(idVec.begin(), idVec.end(),
+               [&](TownID a, TownID b) {
+                    return eucDistOriSqr(get_town_coordinates(a))
+                            < eucDistOriSqr(get_town_coordinates(b)); });
+    return idVec;
 }
 
 TownID Datastructures::min_distance()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented("min_distance()");
+    std::vector<TownID> idVec = towns_distance_increasing();
+    return idVec.front();
 }
 
 TownID Datastructures::max_distance()
 {
-    // Replace the line below with your implementation
-    throw NotImplemented("max_distance()");
+    std::vector<TownID> idVec = towns_distance_increasing();
+    return idVec.back();
 }
 
-bool Datastructures::add_vassalship(TownID /*vassalid*/, TownID /*masterid*/)
+bool Datastructures::add_vassalship(TownID vassalid, TownID masterid)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("add_vassalship()");
+    std::unordered_map<TownID,Town*>::const_iterator itV;
+    std::unordered_map<TownID,Town*>::const_iterator itM;
+    std::unordered_map<TownID,TownID>::const_iterator itV2;
+    itV = townMap.find(vassalid);
+    itM = townMap.find(masterid);
+    itV2 = vassalMap.find(vassalid);
+    if (itV != townMap.end() && itM != townMap.end() && itV2 == vassalMap.end())
+    {
+
+        vassalMap.insert(std::make_pair(vassalid,masterid));
+        return true;
+    }
+    else
+    {
+        return false  ;
+    }
+
 }
 
-std::vector<TownID> Datastructures::get_town_vassals(TownID /*id*/)
+std::vector<TownID> Datastructures::get_town_vassals(TownID id)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("get_town_vassals()");
+    std::unordered_map<TownID,TownID>::const_iterator it;
+    it = vassalMap.find(id);
+    std::vector<TownID> vassalVec;
+    if (it != vassalMap.end())
+    {
+        for(auto it=vassalMap.begin(); it!=vassalMap.end(); it++)
+        {
+            if (it->second == id)
+            {
+                vassalVec.push_back(it->first);
+            }
+        }
+    }
+    else
+    {
+        vassalVec.push_back(NO_TOWNID);
+    }
+        return vassalVec;
 }
 
 std::vector<TownID> Datastructures::taxer_path(TownID /*id*/)
@@ -181,7 +242,7 @@ std::vector<TownID> Datastructures::taxer_path(TownID /*id*/)
     // Also uncomment parameters ( /* param */ -> param )
     throw NotImplemented("taxer_path()");
 }
-
+ // optional
 bool Datastructures::remove_town(TownID /*id*/)
 {
     // Replace the line below with your implementation

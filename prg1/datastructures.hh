@@ -1,8 +1,8 @@
 // Datastructures.hh
 //
-// Student name:
-// Student email:
-// Student number:
+// Student name: Lauri Mänty
+// Student email: lauri.manty@tuni.fi
+// Student number: H290353
 
 #ifndef DATASTRUCTURES_HH
 #define DATASTRUCTURES_HH
@@ -187,6 +187,7 @@ public:
 
 private:
     std::unordered_map<TownID, Town*> townMap;
+    std::unordered_map<TownID, TownID> vassalMap;
 
 };
 
