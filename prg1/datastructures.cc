@@ -162,12 +162,12 @@ std::vector<TownID> Datastructures::towns_alphabetically()
 
 }
 
-double eucDistOriSqr(Coord coord1, Coord coord2 = {0,0})
+int Datastructures::eucDistSqr(Coord coord1, Coord coord2 /*={0,0}*/)
 {
-    double dx = (coord1.x-coord2.x);
-    double dy = (coord1.y-coord2.y);
-    double distSqr = dx*dx + dy*dy;
-    return distSqr; // returnig square of the distance is more efficient
+    int dx = (coord1.x-coord2.x);
+    int dy = (coord1.y-coord2.y);
+    int distSqr = dx*dx + dy*dy;
+    return distSqr; // returning square of the distance is more efficient
                     // and for sorting purposes its exactly same as returning square root
 }
 
@@ -175,9 +175,9 @@ std::vector<TownID> Datastructures::towns_distance_increasing()
 {
     std::vector<TownID> idVec = all_towns();
     std::sort(idVec.begin(), idVec.end(),
-               [&](TownID a, TownID b) {
-                    return eucDistOriSqr(get_town_coordinates(a))
-                            < eucDistOriSqr(get_town_coordinates(b)); });
+               [this](TownID a, TownID b) {
+        return eucDistSqr(get_town_coordinates(a))
+                < eucDistSqr(get_town_coordinates(b)); });
     return idVec;
 }
 

@@ -189,6 +189,8 @@ private:
     std::unordered_map<TownID, Town*> townMap;
     std::unordered_map<TownID, TownID> vassalMap;
 
+    int eucDistSqr(Coord coord1, Coord coord2 = {0,0});
+
 };
 
 #endif // DATASTRUCTURES_HH
