@@ -89,10 +89,13 @@ private:
 
 struct Town
 {
- TownID town_id_;
- Name town_name_;
- Coord town_coord_;
- int town_tax_;
+    TownID town_id_;
+    Name town_name_;
+    Coord town_coord_;
+    int town_tax_;
+    Town* master_ = nullptr;
+    std::vector<Town*> vassals_;
+
 };
 
 // This is the class you are supposed to implement
@@ -187,9 +190,9 @@ public:
 
 private:
     std::unordered_map<TownID, Town*> townMap;
-    std::unordered_map<TownID, TownID> vassalMap;
 
     int eucDistSqr(Coord coord1, Coord coord2 = {0,0});
+    std::vector<TownID> taxer_path_recursive(Town* masterTown,std::vector<TownID>& masterVec);
 
 };
 

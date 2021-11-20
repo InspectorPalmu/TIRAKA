@@ -197,14 +197,13 @@ bool Datastructures::add_vassalship(TownID vassalid, TownID masterid)
 {
     std::unordered_map<TownID,Town*>::const_iterator itV;
     std::unordered_map<TownID,Town*>::const_iterator itM;
-    std::unordered_map<TownID,TownID>::const_iterator itV2;
+
     itV = townMap.find(vassalid);
     itM = townMap.find(masterid);
-    itV2 = vassalMap.find(vassalid);
-    if (itV != townMap.end() && itM != townMap.end() && itV2 == vassalMap.end())
+    if (itV != townMap.end() && itM != townMap.end() && itV->second->master_ == nullptr)
     {
-
-        vassalMap.insert(std::make_pair(vassalid,masterid));
+        itV->second->master_ = itM->second;
+        itM->second->vassals_.push_back(itV->second);
         return true;
     }
     else
@@ -216,31 +215,60 @@ bool Datastructures::add_vassalship(TownID vassalid, TownID masterid)
 
 std::vector<TownID> Datastructures::get_town_vassals(TownID id)
 {
-    std::unordered_map<TownID,TownID>::const_iterator it;
-    it = vassalMap.find(id);
     std::vector<TownID> vassalVec;
-    if (it != vassalMap.end())
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    it = townMap.find(id);
+    if (it != townMap.end())
     {
-        for(auto it=vassalMap.begin(); it!=vassalMap.end(); it++)
-        {
-            if (it->second == id)
-            {
-                vassalVec.push_back(it->first);
-            }
-        }
+       for(auto town : it->second->vassals_)
+       {
+           vassalVec.push_back(town->town_id_);
+       }
     }
     else
     {
         vassalVec.push_back(NO_TOWNID);
     }
-        return vassalVec;
+    return vassalVec;
 }
 
-std::vector<TownID> Datastructures::taxer_path(TownID /*id*/)
+std::vector<TownID> Datastructures::taxer_path_recursive(Town* masterTown,std::vector<TownID>& masterVec)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("taxer_path()");
+    if(masterTown->master_ != nullptr)
+    {
+        masterVec.push_back(masterTown->master_->town_id_);
+        taxer_path_recursive(masterTown->master_, masterVec);
+        return masterVec;
+    }
+    else
+    {
+        return masterVec;
+    }
+}
+
+std::vector<TownID> Datastructures::taxer_path(TownID id)
+{
+    std::vector<TownID> masterVec;
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    it = townMap.find(id);
+    if (it != townMap.end())
+    {
+        if(it->second->master_ != nullptr)
+        {
+            masterVec.push_back(it->second->master_->town_id_);
+            taxer_path_recursive(it->second->master_, masterVec);
+            return masterVec;
+        }
+        else
+        {
+            return masterVec;
+        }
+    }
+    else
+    {
+        masterVec.push_back(NO_TOWNID);
+        return masterVec;
+    }
 }
  // optional
 bool Datastructures::remove_town(TownID /*id*/)
