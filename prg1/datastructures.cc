@@ -203,7 +203,7 @@ bool Datastructures::add_vassalship(TownID vassalid, TownID masterid)
     if (itV != townMap.end() && itM != townMap.end() && itV->second->master_ == nullptr)
     {
         itV->second->master_ = itM->second;
-        itM->second->vassals_.push_back(itV->second);
+        itM->second->vassals_.insert(std::make_pair(vassalid,itV->second));
         return true;
     }
     else
@@ -222,7 +222,7 @@ std::vector<TownID> Datastructures::get_town_vassals(TownID id)
     {
        for(auto town : it->second->vassals_)
        {
-           vassalVec.push_back(town->town_id_);
+           vassalVec.push_back(town.second->town_id_);
        }
     }
     else
@@ -271,30 +271,140 @@ std::vector<TownID> Datastructures::taxer_path(TownID id)
     }
 }
  // optional
-bool Datastructures::remove_town(TownID /*id*/)
+bool Datastructures::remove_town(TownID id)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("remove_town()");
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    it = townMap.find(id);
+    if (it != townMap.end())
+    {
+        if(it->second->master_ != nullptr) // on mestari
+        {
+            if(it->second->vassals_.size() != 0) // on vassaali ja mestari
+            {
+                for(auto vassal : it->second->vassals_) // käy läpi vassaalit
+                {
+                    vassal.second->master_ = nullptr; //vassaalin mestari nollaten
+                    // lisää vassaalin mestariksi mestarin mestari
+                    add_vassalship(vassal.second->town_id_, it->second->master_->town_id_);
+                }
+            }
+            //Behold..! My spaget!
+            std::unordered_map<TownID,Town*>::const_iterator it2;
+            it2 = it->second->master_->vassals_.find(id);
+            it->second->master_->vassals_.erase(it2);
+        }
+        else //ei mestaria
+        {
+            if(it->second->vassals_.size() != 0) // on vassaali ja ei mestaria
+            {
+                for(auto vassal : it->second->vassals_) // käy läpi vassaalit
+                {
+                    vassal.second->master_ = nullptr; // be free
+                }
+            }
+        }
+        townMap.erase(id);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
 }
 
-std::vector<TownID> Datastructures::towns_nearest(Coord /*coord*/)
+std::vector<TownID> Datastructures::towns_nearest(Coord coord)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("towns_nearest()");
+    std::vector<TownID> idVec = all_towns();
+    std::sort(idVec.begin(), idVec.end(),
+               [this, coord](TownID a, TownID b) {
+        return eucDistSqr(get_town_coordinates(a),coord)
+                < eucDistSqr(get_town_coordinates(b),coord); });
+    return idVec;
 }
 
-std::vector<TownID> Datastructures::longest_vassal_path(TownID /*id*/)
+std::vector<TownID> Datastructures::longest_path_recursive(Town* Town,
+                                                           std::vector<TownID>& tempPath,
+                                                           std::vector<TownID>& longestPath)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("longest_vassal_path()");
+    tempPath.push_back(Town->town_id_);
+    if(!Town->vassals_.empty())
+    {
+        for(auto vassal : Town->vassals_)
+        {
+            longest_path_recursive(vassal.second, tempPath, longestPath);
+            tempPath.pop_back();
+        }
+    }
+    else
+    {
+        if(tempPath.size() > longestPath.size())
+        {
+            longestPath = tempPath;
+        }
+    }
+    return longestPath;
 }
 
-int Datastructures::total_net_tax(TownID /*id*/)
+std::vector<TownID> Datastructures::longest_vassal_path(TownID id)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("total_net_tax()");
+    std::vector<TownID> longestPath;
+    std::vector<TownID> tempPath;
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    it = townMap.find(id);
+    if (it != townMap.end())
+    {
+        if(it->second->vassals_.empty())
+        {
+            longestPath.push_back(NO_TOWNID);
+            return longestPath;
+        }
+        else
+        {
+            longest_path_recursive(it->second, tempPath ,longestPath);
+            return longestPath;
+        }
+    }
+    else
+    {
+        longestPath.push_back(NO_TOWNID);
+        return longestPath;
+    }
+}
+
+int Datastructures::total_net_tax_recursive(Town* masterTown)
+{
+    int tax = masterTown->town_tax_;
+    if(!masterTown->vassals_.empty())
+    {
+       for(auto vassal : masterTown->vassals_)
+       {
+           tax += floor(total_net_tax_recursive(vassal.second)*0.1);
+       }
+    }
+    return tax;
+}
+
+int Datastructures::total_net_tax(TownID id)
+{
+    int tax;
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    it = townMap.find(id);
+    if(it != townMap.end())
+    {
+            tax = total_net_tax_recursive(it->second);
+            if(it->second->master_ != nullptr)
+            {
+                return floor(tax*0.9);
+            }
+            else
+            {
+                return tax;
+            }
+    }
+    else
+    {
+        return NO_VALUE;
+    }
+
 }

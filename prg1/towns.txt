@@ -8,3 +8,5 @@ add_town Tku Turku (1,1) 30
 add_vassalship Ol Kuo
 add_vassalship Kuo Hki
 add_vassalship Tpe Hki
+town_vassals Hki
+

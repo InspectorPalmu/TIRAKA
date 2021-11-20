@@ -94,7 +94,7 @@ struct Town
     Coord town_coord_;
     int town_tax_;
     Town* master_ = nullptr;
-    std::vector<Town*> vassals_;
+    std::unordered_map<TownID, Town*> vassals_;
 
 };
 
@@ -192,8 +192,13 @@ private:
     std::unordered_map<TownID, Town*> townMap;
 
     int eucDistSqr(Coord coord1, Coord coord2 = {0,0});
+
     std::vector<TownID> taxer_path_recursive(Town* masterTown,std::vector<TownID>& masterVec);
 
+    std::vector<TownID> longest_path_recursive(Town* vassalTown, std::vector<TownID>& tempPath, std::vector<TownID>& longestPath);
+
+    int total_net_tax_recursive(Town* vassalTown);
 };
+
 
 #endif // DATASTRUCTURES_HH
