@@ -35,7 +35,11 @@ Datastructures::Datastructures()
 
 Datastructures::~Datastructures()
 {
-    // Write any cleanup you need here
+    for (auto town : townMap)
+    {
+        delete town.second;
+        town.second = nullptr;
+    }
 }
 
 unsigned int Datastructures::town_count()
