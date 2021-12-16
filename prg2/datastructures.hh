@@ -87,6 +87,19 @@ private:
 };
 
 
+
+struct Town
+{
+    TownID town_id_;
+    Name town_name_;
+    Coord town_coord_;
+    int town_tax_;
+    Town* master_ = nullptr;
+    std::unordered_map<TownID, Town*> vassals_;
+    std::unordered_map<TownID, Town*> roads_;
+
+};
+
 // This is the class you are supposed to implement
 
 class Datastructures
@@ -95,88 +108,91 @@ public:
     Datastructures();
     ~Datastructures();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: .size command for unordered map
+    //                               is constant in time complexity
     unsigned int town_count();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: each pointer needs to be destructed
     void clear_all();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: .find and .insert are constant
     bool add_town(TownID id, Name const& name, Coord coord, int tax);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: .find is constant
     Name get_town_name(TownID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: .find is constant
     Coord get_town_coordinates(TownID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: .find is constant
     int get_town_tax(TownID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: for loop
     std::vector<TownID> all_towns();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: for loop
     std::vector<TownID> find_towns(Name const& name);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: .find is constant
     bool change_town_name(TownID id, Name const& newname);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(nlog(n))
+    // Short rationale for estimate: std::sort uses approximately nlog(n) comparisons
     std::vector<TownID> towns_alphabetically();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(nlog(n))
+    // Short rationale for estimate: std::sort uses approximately nlog(n) comparisons
+    //                               and euclidean distance is constant
     std::vector<TownID> towns_distance_increasing();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(nlog(n))
+    // Short rationale for estimate: same as towns_distance_increasing()
+    //                               but we just return first value
     TownID min_distance();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(nlog(n))
+    // Short rationale for estimate: same as towns_distance_increasing()
+    //                               but we just return last value
     TownID max_distance();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: .find and insert are constant
     bool add_vassalship(TownID vassalid, TownID masterid);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: for loop
     std::vector<TownID> get_town_vassals(TownID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: recursion, vector.pushback() and .find() are constants
     std::vector<TownID> taxer_path(TownID id);
 
     // Non-compulsory phase 1 operations
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: for loop
     bool remove_town(TownID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(nlog(n))
+    // Short rationale for estimate: same as towns_distance_increasing()
     std::vector<TownID> towns_nearest(Coord coord);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: it has to go through each town that is vassal to master
     std::vector<TownID> longest_vassal_path(TownID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: it has to go through each town that is vassal to master
     int total_net_tax(TownID id);
-
 
     // Phase 2 operations
 
@@ -223,7 +239,17 @@ public:
     Distance trim_road_network();
 
 private:
-    // Add stuff needed for your class implementation here
+    std::unordered_map<TownID, Town*> townMap;   
+
+    std::vector<std::pair<TownID, TownID>> roadVec;
+
+    int eucDistSqr(Coord coord1, Coord coord2 = {0,0});
+
+    std::vector<TownID> taxer_path_recursive(Town* masterTown,std::vector<TownID>& masterVec);
+
+    std::vector<TownID> longest_path_recursive(Town* vassalTown, std::vector<TownID>& tempPath, std::vector<TownID>& longestPath);
+
+    int total_net_tax_recursive(Town* vassalTown);
 
 };
 
