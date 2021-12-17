@@ -1,8 +1,8 @@
 // Datastructures.hh
 //
-// Student name:
-// Student email:
-// Student number:
+// Student name: Lauri Mänty
+// Student email: lauri.manty@tuni.fi
+// Student number: H290353
 
 #ifndef DATASTRUCTURES_HH
 #define DATASTRUCTURES_HH
@@ -14,6 +14,8 @@
 #include <limits>
 #include <functional>
 #include <exception>
+#include <queue>
+#include <map>
 
 // Types for IDs
 using TownID = std::string;
@@ -94,11 +96,14 @@ struct Town
     Name town_name_;
     Coord town_coord_;
     int town_tax_;
+    bool visited = false;
+    Town* prev = nullptr;
     Town* master_ = nullptr;
     std::unordered_map<TownID, Town*> vassals_;
     std::unordered_map<TownID, Town*> roads_;
 
 };
+
 
 // This is the class you are supposed to implement
 
@@ -196,34 +201,34 @@ public:
 
     // Phase 2 operations
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: Have to go through each town
     void clear_roads();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(log(n))
+    // Short rationale for estimate: map insert is logarithmic
     std::vector<std::pair<TownID, TownID>> all_roads();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: .find is constant and single elemtn insertion is constant
     bool add_road(TownID town1, TownID town2);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: same as get_town_vassals
     std::vector<TownID> get_roads_from(TownID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(V+E)
+    // Short rationale for estimate: BFS
     std::vector<TownID> any_route(TownID fromid, TownID toid);
 
     // Non-compulsory phase 2 operations
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(1)
+    // Short rationale for estimate: find is constant
     bool remove_road(TownID town1, TownID town2);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(V+E)
+    // Short rationale for estimate: BFS
     std::vector<TownID> least_towns_route(TownID fromid, TownID toid);
 
     // Estimate of performance:
@@ -243,7 +248,7 @@ private:
 
     std::vector<std::pair<TownID, TownID>> roadVec;
 
-    int eucDistSqr(Coord coord1, Coord coord2 = {0,0});
+    double eucDist(Coord coord1, Coord coord2 = {0,0});
 
     std::vector<TownID> taxer_path_recursive(Town* masterTown,std::vector<TownID>& masterVec);
 
@@ -251,6 +256,9 @@ private:
 
     int total_net_tax_recursive(Town* vassalTown);
 
+    std::vector<TownID> trace_route(TownID end);
+
 };
+
 
 #endif // DATASTRUCTURES_HH

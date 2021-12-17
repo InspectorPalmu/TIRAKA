@@ -46,7 +46,6 @@ void Datastructures::clear_all()
 {
     // Replace the line below with your implementation
     townMap.clear();
-    roadVec.clear();
 }
 
 bool Datastructures::add_town(TownID id, const Name &name, Coord coord, int tax)
@@ -161,13 +160,12 @@ std::vector<TownID> Datastructures::towns_alphabetically()
 
 }
 
-int Datastructures::eucDistSqr(Coord coord1, Coord coord2 /*={0,0}*/)
+double Datastructures::eucDist(Coord coord1, Coord coord2 /*={0,0}*/)
 {
     int dx = (coord1.x-coord2.x);
     int dy = (coord1.y-coord2.y);
     int distSqr = dx*dx + dy*dy;
-    return distSqr; // returning square of the distance is more efficient
-                    // and for sorting purposes its exactly same as returning square root
+    return sqrt(distSqr);
 }
 
 std::vector<TownID> Datastructures::towns_distance_increasing()
@@ -175,8 +173,8 @@ std::vector<TownID> Datastructures::towns_distance_increasing()
     std::vector<TownID> idVec = all_towns();
     std::sort(idVec.begin(), idVec.end(),
                [this](TownID a, TownID b) {
-        return eucDistSqr(get_town_coordinates(a))
-                < eucDistSqr(get_town_coordinates(b)); });
+        return eucDist(get_town_coordinates(a))
+                < eucDist(get_town_coordinates(b)); });
     return idVec;
 }
 
@@ -317,8 +315,8 @@ std::vector<TownID> Datastructures::towns_nearest(Coord coord)
     std::vector<TownID> idVec = all_towns();
     std::sort(idVec.begin(), idVec.end(),
                [this, coord](TownID a, TownID b) {
-        return eucDistSqr(get_town_coordinates(a),coord)
-                < eucDistSqr(get_town_coordinates(b),coord); });
+        return eucDist(get_town_coordinates(a),coord)
+                < eucDist(get_town_coordinates(b),coord); });
     return idVec;
 }
 
@@ -415,44 +413,43 @@ int Datastructures::total_net_tax(TownID id)
 
 void Datastructures::clear_roads()
 {
-    for(auto townpair : roadVec)
-    {
-        std::unordered_map<TownID,Town*>::const_iterator it1;
-        it1 = townMap.find(townpair.first);
-        std::unordered_map<TownID,Town*>::const_iterator it2;
-        it2 = townMap.find(townpair.second);
-        it1->second->roads_.clear();
-        it2->second->roads_.clear();
+    for(auto town : townMap)
+    {       
+        town.second->roads_.clear();
     }
-    roadVec.clear();
 }
 
-std::vector<std::pair<TownID, TownID>> Datastructures::all_roads()
-{
-    return roadVec;
+std::vector<std::pair<TownID, TownID>> Datastructures::all_roads() // olis voinu säilyttää jossai vectoris heti alkuu
+                                                                   // mutta olis hidastanu remove_roadia merkittävästi
+{                                                                  // joten uhrataan se millä ei oo merkitystä
+    std::vector<std::pair<TownID, TownID>> allRoadVec;
+    for(auto town : townMap)
+    {
+        for(auto road_dest : town.second->roads_)
+        {
+            if (town.first < road_dest.first)
+            allRoadVec.push_back(std::make_pair(town.first, road_dest.first));
+        }
+    }
+    return allRoadVec;
 }
 
 bool Datastructures::add_road(TownID town1, TownID town2)
 {
-    std::pair road = std::make_pair(town1, town2);
+    std::unordered_map<TownID,Town*>::const_iterator it1;
+    std::unordered_map<TownID,Town*>::const_iterator it2;
+
+    it1 = townMap.find(town1);
+    it2 = townMap.find(town2);
+    if (it1 != townMap.end() && it2 != townMap.end() && it1->second->roads_.find(town2) == it1->second->roads_.end()) // tarvii kattoo vain yhdestä suuntaa
     {
-        std::unordered_map<TownID,Town*>::const_iterator it1;
-        std::unordered_map<TownID,Town*>::const_iterator it2;
-
-        it1 = townMap.find(town1);
-        it2 = townMap.find(town2);
-        if (it1 != townMap.end() && it2 != townMap.end() && it1->second->roads_.find(town2) == it1->second->roads_.end()) // tarvii kattoo vain yhdestä suuntaa
-        {
-            roadVec.push_back(road); // säiliö uniikeille teille
-            it1->second->roads_.insert(std::make_pair(town2,it2->second)); //säiliö mihin kaupungista menee tiet
-            it2->second->roads_.insert(std::make_pair(town1,it1->second));
-            return true;
-        }
-        else
-        {
-            return false  ;
-        }
-
+        it1->second->roads_.insert(std::make_pair(town2,it2->second));
+        it2->second->roads_.insert(std::make_pair(town1,it1->second));
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -477,25 +474,97 @@ std::vector<TownID> Datastructures::get_roads_from(TownID id)
     }
 }
 
-std::vector<TownID> Datastructures::any_route(TownID /*fromid*/, TownID /*toid*/)
+std::vector<TownID> Datastructures::trace_route(TownID end)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("any_route()");
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    it = townMap.find(end);
+    std::vector<TownID> path;
+    Town* town_ptr = it->second;
+    Town* temp;
+    if (it->second->prev != nullptr)
+    {
+        while(town_ptr != nullptr)
+        {
+            path.push_back(town_ptr->town_id_);
+            temp = town_ptr;
+            town_ptr = town_ptr->prev;
+            temp->prev = nullptr;
+        }
+    }
+
+    std::reverse(path.begin(),path.end());
+    return path;
 }
 
-bool Datastructures::remove_road(TownID /*town1*/, TownID /*town2*/)
+
+std::vector<TownID> Datastructures::any_route(TownID fromid, TownID toid)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("remove_road()");
+    return least_towns_route(fromid, toid);
 }
 
-std::vector<TownID> Datastructures::least_towns_route(TownID /*fromid*/, TownID /*toid*/)
+bool Datastructures::remove_road(TownID town1, TownID town2)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
-    throw NotImplemented("least_towns_route()");
+    if (townMap.find(town1) != townMap.end() && townMap.find(town2) != townMap.end())
+    {
+        std::unordered_map<TownID,Town*>::const_iterator it1;
+        it1 = townMap.find(town1);
+        std::unordered_map<TownID,Town*>::const_iterator it2;
+        it2 = townMap.find(town2);
+        if (it1->second->roads_.find(town2) != it1->second->roads_.end())
+        {
+            it1->second->roads_.erase(town2);
+            it2->second->roads_.erase(town1);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+std::vector<TownID> Datastructures::least_towns_route(TownID fromid, TownID toid)
+{
+    std::unordered_map<TownID,Town*>::const_iterator it;
+    it = townMap.find(fromid);
+    if (it != townMap.end() && townMap.find(toid) != townMap.end())
+    {
+
+        std::queue<Town*> townQueue;
+        bool reach_end = false;
+        it->second->visited = true;
+        townQueue.push(it->second);
+
+        while(!townQueue.empty() && !reach_end)
+        {
+            Town* current_town = townQueue.front();
+            townQueue.pop();
+            for(auto neighbour : current_town->roads_)
+            {
+                if(!neighbour.second->visited)
+                {
+                    neighbour.second->visited = true;
+                    townQueue.push(neighbour.second);
+                    neighbour.second->prev = current_town;
+                    if(neighbour.first == toid)
+                    {
+                        reach_end = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return trace_route(toid);
+    }
+    else
+    {
+        return std::vector<TownID>();
+    }
+
 }
 
 std::vector<TownID> Datastructures::road_cycle_route(TownID /*startid*/)
@@ -507,8 +576,6 @@ std::vector<TownID> Datastructures::road_cycle_route(TownID /*startid*/)
 
 std::vector<TownID> Datastructures::shortest_route(TownID /*fromid*/, TownID /*toid*/)
 {
-    // Replace the line below with your implementation
-    // Also uncomment parameters ( /* param */ -> param )
     throw NotImplemented("shortest_route()");
 }
 
@@ -517,3 +584,4 @@ Distance Datastructures::trim_road_network()
     // Replace the line below with your implementation
     throw NotImplemented("trim_road_network()");
 }
+
