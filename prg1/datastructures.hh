@@ -1,8 +1,6 @@
 // Datastructures.hh
 //
 // Student name: Lauri Mänty
-// Student email: lauri.manty@tuni.fi
-// Student number: H290353
 
 #ifndef DATASTRUCTURES_HH
 #define DATASTRUCTURES_HH
