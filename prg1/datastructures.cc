@@ -1,8 +1,6 @@
 // Datastructures.cc
 //
 // Student name: Lauri Mänty
-// Student email: lauri.manty@tuni.fi
-// Student number: H290353
 
 #include "datastructures.hh"
 
